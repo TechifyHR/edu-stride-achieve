@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUserGroupsRouteImport } from './routes/_authenticated/user-groups'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedMyLearningRouteImport } from './routes/_authenticated/my-learning'
@@ -34,6 +35,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUserGroupsRoute = AuthenticatedUserGroupsRouteImport.update({
+  id: '/user-groups',
+  path: '/user-groups',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/my-learning': typeof AuthenticatedMyLearningRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/user-groups': typeof AuthenticatedUserGroupsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/my-learning': typeof AuthenticatedMyLearningRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/user-groups': typeof AuthenticatedUserGroupsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/my-learning': typeof AuthenticatedMyLearningRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/user-groups': typeof AuthenticatedUserGroupsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/reports'
     | '/settings'
+    | '/user-groups'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/reports'
     | '/settings'
+    | '/user-groups'
   id:
     | '__root__'
     | '/'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/_authenticated/my-learning'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
+    | '/_authenticated/user-groups'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/user-groups': {
+      id: '/_authenticated/user-groups'
+      path: '/user-groups'
+      fullPath: '/user-groups'
+      preLoaderRoute: typeof AuthenticatedUserGroupsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -253,6 +272,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMyLearningRoute: typeof AuthenticatedMyLearningRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedUserGroupsRoute: typeof AuthenticatedUserGroupsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -264,6 +284,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMyLearningRoute: AuthenticatedMyLearningRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedUserGroupsRoute: AuthenticatedUserGroupsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
