@@ -48,11 +48,11 @@ function AuthPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: suEmail,
       password: suPassword,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/auth`,
         data: {
           first_name: suFirst,
           last_name: suLast,
@@ -60,11 +60,31 @@ function AuthPage() {
         },
       },
     });
+    if (error) {
+      setLoading(false);
+      return toast.error(error.message);
+    }
+
+    // Some projects require email confirmation — signUp then returns no session.
+    let session = data.session;
+    if (!session) {
+      const { data: signedIn } = await supabase.auth.signInWithPassword({
+        email: suEmail,
+        password: suPassword,
+      });
+      session = signedIn.session ?? null;
+    }
     setLoading(false);
-    if (error) return toast.error(error.message);
+
+    if (!session) {
+      setNeedsConfirmation(true);
+      return toast.info("Check your email to confirm your account, then sign in.");
+    }
+
     toast.success("Workspace created — you're signed in");
     navigate({ to: "/dashboard" });
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-soft via-background to-background flex items-center justify-center px-4 py-12">
