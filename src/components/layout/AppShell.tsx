@@ -49,9 +49,11 @@ const learning: NavItem[] = [
 ];
 const admin: NavItem[] = [
   { to: "/courses", label: "Courses", icon: FolderKanban, hrOnly: true },
-  { to: "/employees", label: "Employees", icon: Users, hrOnly: true },
+  { to: "/employees", label: "People", icon: Users, hrOnly: true },
+  { to: "/user-groups", label: "User Groups", icon: UserCog, hrOnly: true },
   { to: "/reports", label: "Reports", icon: BarChart3, hrOnly: true },
 ];
+
 const comingSoon = [
   { label: "People", icon: UserCog },
   { label: "Leave", icon: Calendar },

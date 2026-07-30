@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,6 +23,11 @@ import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCourseLibraryRouteImport } from './routes/_authenticated/course-library'
 import { Route as AuthenticatedCertificatesRouteImport } from './routes/_authenticated/certificates'
 
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -87,6 +93,7 @@ const AuthenticatedCertificatesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/invite': typeof InviteRoute
   '/certificates': typeof AuthenticatedCertificatesRoute
   '/course-library': typeof AuthenticatedCourseLibraryRoute
   '/courses': typeof AuthenticatedCoursesRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/invite': typeof InviteRoute
   '/certificates': typeof AuthenticatedCertificatesRoute
   '/course-library': typeof AuthenticatedCourseLibraryRoute
   '/courses': typeof AuthenticatedCoursesRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/invite': typeof InviteRoute
   '/_authenticated/certificates': typeof AuthenticatedCertificatesRoute
   '/_authenticated/course-library': typeof AuthenticatedCourseLibraryRoute
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/invite'
     | '/certificates'
     | '/course-library'
     | '/courses'
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/invite'
     | '/certificates'
     | '/course-library'
     | '/courses'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/invite'
     | '/_authenticated/certificates'
     | '/_authenticated/course-library'
     | '/_authenticated/courses'
@@ -172,10 +184,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InviteRoute: typeof InviteRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -294,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InviteRoute: InviteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
