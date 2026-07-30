@@ -148,9 +148,16 @@ function AuthPage() {
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Creating…" : "Create workspace"}
                     </Button>
-                    <p className="text-xs text-muted-foreground text-center">
-                      You'll be set up as the HR Administrator of your new workspace.
-                    </p>
+                    {needsConfirmation ? (
+                      <p className="text-xs text-center rounded-lg bg-primary-soft text-primary px-3 py-2">
+                        Your workspace was created. Confirm your email address, then sign in.
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground text-center">
+                        You'll be set up as the HR Administrator of your new workspace.
+                      </p>
+                    )}
+
                   </form>
                 </TabsContent>
               </CardContent>
