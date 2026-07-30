@@ -9,9 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as InviteRouteImport } from './routes/invite'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedUserGroupsRouteImport } from './routes/_authenticated/user-groups'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedMyLearningRouteImport } from './routes/_authenticated/my-learning'
@@ -21,6 +23,11 @@ import { Route as AuthenticatedCoursesRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCourseLibraryRouteImport } from './routes/_authenticated/course-library'
 import { Route as AuthenticatedCertificatesRouteImport } from './routes/_authenticated/certificates'
 
+const InviteRoute = InviteRouteImport.update({
+  id: '/invite',
+  path: '/invite',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -34,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedUserGroupsRoute = AuthenticatedUserGroupsRouteImport.update({
+  id: '/user-groups',
+  path: '/user-groups',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -81,6 +93,7 @@ const AuthenticatedCertificatesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/invite': typeof InviteRoute
   '/certificates': typeof AuthenticatedCertificatesRoute
   '/course-library': typeof AuthenticatedCourseLibraryRoute
   '/courses': typeof AuthenticatedCoursesRoute
@@ -89,10 +102,12 @@ export interface FileRoutesByFullPath {
   '/my-learning': typeof AuthenticatedMyLearningRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/user-groups': typeof AuthenticatedUserGroupsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/invite': typeof InviteRoute
   '/certificates': typeof AuthenticatedCertificatesRoute
   '/course-library': typeof AuthenticatedCourseLibraryRoute
   '/courses': typeof AuthenticatedCoursesRoute
@@ -101,12 +116,14 @@ export interface FileRoutesByTo {
   '/my-learning': typeof AuthenticatedMyLearningRoute
   '/reports': typeof AuthenticatedReportsRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/user-groups': typeof AuthenticatedUserGroupsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/invite': typeof InviteRoute
   '/_authenticated/certificates': typeof AuthenticatedCertificatesRoute
   '/_authenticated/course-library': typeof AuthenticatedCourseLibraryRoute
   '/_authenticated/courses': typeof AuthenticatedCoursesRoute
@@ -115,12 +132,14 @@ export interface FileRoutesById {
   '/_authenticated/my-learning': typeof AuthenticatedMyLearningRoute
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/user-groups': typeof AuthenticatedUserGroupsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/invite'
     | '/certificates'
     | '/course-library'
     | '/courses'
@@ -129,10 +148,12 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/reports'
     | '/settings'
+    | '/user-groups'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/invite'
     | '/certificates'
     | '/course-library'
     | '/courses'
@@ -141,11 +162,13 @@ export interface FileRouteTypes {
     | '/my-learning'
     | '/reports'
     | '/settings'
+    | '/user-groups'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/invite'
     | '/_authenticated/certificates'
     | '/_authenticated/course-library'
     | '/_authenticated/courses'
@@ -154,16 +177,25 @@ export interface FileRouteTypes {
     | '/_authenticated/my-learning'
     | '/_authenticated/reports'
     | '/_authenticated/settings'
+    | '/_authenticated/user-groups'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  InviteRoute: typeof InviteRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/invite': {
+      id: '/invite'
+      path: '/invite'
+      fullPath: '/invite'
+      preLoaderRoute: typeof InviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -184,6 +216,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/user-groups': {
+      id: '/_authenticated/user-groups'
+      path: '/user-groups'
+      fullPath: '/user-groups'
+      preLoaderRoute: typeof AuthenticatedUserGroupsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -253,6 +292,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMyLearningRoute: typeof AuthenticatedMyLearningRoute
   AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedUserGroupsRoute: typeof AuthenticatedUserGroupsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -264,6 +304,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMyLearningRoute: AuthenticatedMyLearningRoute,
   AuthenticatedReportsRoute: AuthenticatedReportsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedUserGroupsRoute: AuthenticatedUserGroupsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -273,6 +314,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  InviteRoute: InviteRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
