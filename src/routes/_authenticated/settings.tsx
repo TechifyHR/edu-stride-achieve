@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMe } from "@/lib/me.functions";
+import { ROLE_LABELS } from "@/lib/roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -23,7 +24,7 @@ function SettingsPage() {
         <CardHeader><CardTitle className="text-base">Organization</CardTitle></CardHeader>
         <CardContent className="space-y-3 text-sm">
           <Row label="Name" value={me?.organization?.name ?? "—"} />
-          <Row label="Your role" value={me?.role?.replace("_", " ") ?? "—"} />
+          <Row label="Your roles" value={(me?.roles ?? []).map((r) => ROLE_LABELS[r]).join(", ") || "—"} />
           <Row label="Signed in as" value={me?.employee?.email ?? "—"} />
         </CardContent>
       </Card>

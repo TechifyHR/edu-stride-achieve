@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMe } from "@/lib/me.functions";
+import { useViewMode } from "@/lib/view-mode";
 import { getHrDashboard, getEmployeeDashboard } from "@/lib/dashboard.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,9 +22,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const getMeFn = useServerFn(getMe);
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMeFn() });
-  const isHr = me?.role === "hr_admin" || me?.role === "super_admin";
+  const { view } = useViewMode();
+  const isHr = view === "admin" && !!me?.isAdmin;
   return isHr ? <HrDashboard name={me?.employee?.first_name} /> : <EmployeeDashboard name={me?.employee?.first_name} />;
 }
+
 
 function StatCard({ label, value, icon: Icon, tone = "default" }: { label: string; value: number | string; icon: React.ComponentType<{ className?: string }>; tone?: "default" | "success" | "warning" }) {
   const toneCls =
