@@ -55,6 +55,44 @@ export type Database = {
           },
         ]
       }
+      badges: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name: string
+          organization_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          name?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "badges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificates: {
         Row: {
           certificate_number: string
@@ -120,8 +158,10 @@ export type Database = {
           created_at: string
           due_date: string | null
           id: string
+          mandatory: boolean
           organization_id: string
           reminder_frequency: string | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -133,8 +173,10 @@ export type Database = {
           created_at?: string
           due_date?: string | null
           id?: string
+          mandatory?: boolean
           organization_id: string
           reminder_frequency?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -146,8 +188,10 @@ export type Database = {
           created_at?: string
           due_date?: string | null
           id?: string
+          mandatory?: boolean
           organization_id?: string
           reminder_frequency?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -160,6 +204,35 @@ export type Database = {
           },
           {
             foreignKeyName: "course_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_categories_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -225,7 +298,9 @@ export type Database = {
       }
       courses: {
         Row: {
+          archived_at: string | null
           category: string | null
+          category_id: string | null
           certificate_enabled: boolean
           created_at: string
           created_by: string | null
@@ -246,7 +321,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           category?: string | null
+          category_id?: string | null
           certificate_enabled?: boolean
           created_at?: string
           created_by?: string | null
@@ -267,7 +344,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           category?: string | null
+          category_id?: string | null
           certificate_enabled?: boolean
           created_at?: string
           created_by?: string | null
@@ -288,6 +367,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "courses_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "course_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "courses_organization_id_fkey"
             columns: ["organization_id"]
@@ -332,8 +418,122 @@ export type Database = {
           },
         ]
       }
+      employee_badges: {
+        Row: {
+          badge_id: string
+          course_id: string | null
+          earned_at: string
+          employee_id: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          badge_id: string
+          course_id?: string | null
+          earned_at?: string
+          employee_id: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          badge_id?: string
+          course_id?: string | null
+          earned_at?: string
+          employee_id?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_badges_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_badges_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_badges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employee_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          employee_id: string | null
+          expires_at: string
+          id: string
+          invited_by: string | null
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          employee_id?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          organization_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          employee_id?: string | null
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_invitations_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employees: {
         Row: {
+          avatar_url: string | null
           created_at: string
           date_joined: string | null
           deleted_at: string | null
@@ -342,15 +542,18 @@ export type Database = {
           employee_code: string | null
           employment_status: Database["public"]["Enums"]["employment_status"]
           first_name: string
+          gender: Database["public"]["Enums"]["gender_type"] | null
           id: string
           job_title: string | null
           last_name: string
           manager_id: string | null
           organization_id: string
+          phone: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           date_joined?: string | null
           deleted_at?: string | null
@@ -359,15 +562,18 @@ export type Database = {
           employee_code?: string | null
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           job_title?: string | null
           last_name: string
           manager_id?: string | null
           organization_id: string
+          phone?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           date_joined?: string | null
           deleted_at?: string | null
@@ -376,11 +582,13 @@ export type Database = {
           employee_code?: string | null
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           job_title?: string | null
           last_name?: string
           manager_id?: string | null
           organization_id?: string
+          phone?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -470,6 +678,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_preferences: {
+        Row: {
+          announcements: boolean
+          badge_earned: boolean
+          certificate_ready: boolean
+          course_completed: boolean
+          course_reminder: boolean
+          created_at: string
+          due_date: boolean
+          id: string
+          new_course: boolean
+          overdue_course: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          announcements?: boolean
+          badge_earned?: boolean
+          certificate_ready?: boolean
+          course_completed?: boolean
+          course_reminder?: boolean
+          created_at?: string
+          due_date?: boolean
+          id?: string
+          new_course?: boolean
+          overdue_course?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          announcements?: boolean
+          badge_earned?: boolean
+          certificate_ready?: boolean
+          course_completed?: boolean
+          course_reminder?: boolean
+          created_at?: string
+          due_date?: boolean
+          id?: string
+          new_course?: boolean
+          overdue_course?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -704,6 +957,90 @@ export type Database = {
           },
         ]
       }
+      user_group_members: {
+        Row: {
+          created_at: string
+          employee_id: string
+          group_id: string
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          group_id: string
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          group_id?: string
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_group_members_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "user_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_group_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_groups: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -750,7 +1087,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
       is_hr_admin: { Args: never; Returns: boolean }
+      is_owner: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "super_admin" | "hr_admin" | "manager" | "employee"
@@ -758,6 +1097,7 @@ export type Database = {
       course_status: "draft" | "published" | "archived"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       employment_status: "active" | "on_leave" | "terminated"
+      gender_type: "male" | "female" | "other" | "undisclosed"
       lesson_type: "youtube" | "video" | "pdf" | "pptx" | "text" | "link"
       question_type: "mcq" | "tf" | "multi"
     }
@@ -892,6 +1232,7 @@ export const Constants = {
       course_status: ["draft", "published", "archived"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       employment_status: ["active", "on_leave", "terminated"],
+      gender_type: ["male", "female", "other", "undisclosed"],
       lesson_type: ["youtube", "video", "pdf", "pptx", "text", "link"],
       question_type: ["mcq", "tf", "multi"],
     },
