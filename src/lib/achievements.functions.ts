@@ -54,7 +54,8 @@ export const getMyAchievements = createServerFn({ method: "GET" })
       .from("lesson_progress")
       .select("id", { count: "exact", head: true })
       .eq("employee_id", employee.id)
-      .eq("completed", true);
+      .not("completed_at", "is", null);
+
 
     return {
       employeeName: `${employee.first_name} ${employee.last_name}`,
