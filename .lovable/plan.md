@@ -1,56 +1,76 @@
-## Goal
 
-Give the HR Admin real admin power: add people (with invite emails), organise them into user groups, build courses with lessons, and assign courses to individuals/departments/groups with start and due dates.
+# PeoHub by TechifyHR — Roles, Auth, Navigation & Phase 2
 
-## 1. Database additions
+Built on the existing app. No redesign: same green/white SaaS system, same routes and components, extended.
 
-- Add `gender` to employees (male / female / other / prefer not to say, optional).
-- New `user_groups` table (name, description, org).
-- New `user_group_members` join table (group + employee).
-- New `employee_invitations` table (email, token, role, expiry, status) so invited people can set a password.
-- Extend the assignment target type with `group`, and add a `start_date` to assignments (due date already exists).
-- All new tables get org-scoped access rules: HR Admins manage, employees read what concerns them.
+## Current state (verified)
 
-## 2. Add People (Employees page)
+- Roles are single-valued per user: `user_roles` holds one row read via `getMe()` as one `role`, and the whole UI gates on `role === 'hr_admin' | 'super_admin'`. There is no owner concept and no multi-role support.
+- Invites use `supabaseAdmin.auth.admin.inviteUserByEmail` with `redirectTo = ${origin}/invite`; `/invite` only reads an existing session and calls `updateUser({ password })`. The email itself is the default backend template, which is why recipients land on a non-branded page.
+- `employees` has `employee_code, first_name, last_name, email, job_title, department_id, manager_id, employment_status, date_joined` — no `phone`, no `avatar_url`.
+- No tables for badges, notification preferences, course categories, or certificate numbering beyond the existing `certificates` table.
+- Header currently has a centered/left search bar; sidebar Learning is a flat section; Certificates is a top-level item.
 
-Replace the read-only directory with a full management screen:
-- "Add person" dialog: first name, last name, gender, email, department, job title, platform role (HR Admin / Manager / Employee), and user groups.
-- Saving creates the employee record and sends an invite email with a link to set a password.
-- Row actions: edit details, resend invite, deactivate.
-- Filters by department, group, status; search by name/email.
-- Departments manageable inline (create on the fly).
+---
 
-## 3. Invite acceptance
+## Phase A — Roles & permissions (foundation)
 
-New public page `/invite` — the invited person opens the emailed link, sets a password, and is linked to their existing employee record with the role the admin chose. Expired/used links show a clear message.
+**Data**
+- Add `workspace_owner` to the `app_role` enum; keep `user_roles` as the multi-row source of truth (unique on user+role) so one user holds several roles at once.
+- Workspace creation grants the creator **both** `workspace_owner` and `employee` rows, plus an `employees` record, in one transaction. Backfill existing org creators as owner + employee.
+- Security-definer helpers: `has_role()`, `is_admin()` (owner or admin), `is_owner()`. RLS policies switch from "hr_admin" checks to `is_admin()`; owner rows are protected — admins cannot delete or demote the owner, only the owner can grant/revoke Admin and transfer nothing.
+- `GRANT` statements included for every new/changed table.
 
-## 4. User Groups page
+**App**
+- `getMe()` returns `roles: string[]` plus derived `isOwner / isAdmin / isManager / isEmployee`.
+- Owner immediately has departments, groups, people, bulk import, courses, assignments, reports, settings, invites.
 
-New "User Groups" item under Administration:
-- List groups with member counts.
-- Create/rename/delete a group.
-- Add or remove members from the directory.
-- Groups become an assignment target.
+## Phase B — Native invitation & auth flow
 
-## 5. Course Builder
+- Branded invite email template (PeoHub by TechifyHR) configured on the backend, linking to the app's own `/invite` URL — never a third-party or Lovable page.
+- `/invite` handles the token in the URL hash/query, exchanges it for a session, shows Set Password, then signs in and lands on the **Employee Dashboard**.
+- Already-registered users hitting an invite link go to the app's `/auth` sign-in.
+- After any login, land on the Employee Dashboard — never Admin View automatically.
 
-Upgrade the Courses page for HR Admins:
-- Create/edit course: title, description, category, difficulty, thumbnail, mandatory flag, pass score, certificate toggle, status (draft/published).
-- Lesson builder inside a course: ordered list, drag to reorder, lesson types YouTube, uploaded video, PDF, PPT, text, link; per-lesson minimum watch percentage.
-- Publish/archive control.
+## Phase C — Shell: view switcher, header, navigation, rebrand
 
-## 6. Assign courses with timeline
+- **View switcher** (only when the user has >1 role): a dropdown at the far right of the header, before Notifications — Employee View / Admin View / Manager View. Stores the active view in a context + localStorage; switching swaps sidebar and dashboard without signing out.
+- **Header**: all controls right-aligned in order View Switcher → Notifications → Avatar. Search moves into the left of the content area (nothing centered).
+- **User dropdown**: Profile, My Achievements, Settings, Logout.
+- **Sidebar**: collapsible "Learning" group (My Learning, Course Library, My Achievements); Certificates is folded into Achievements; other HR modules stay as "Coming Soon". Admin View sidebar: Dashboard, People, Departments, Groups, Courses, Assignments, Reports, Certificates, Settings.
+- **Rebrand** to "PeoHub by TechifyHR" across logo, titles, meta descriptions and emails; Learning is presented as one module of the platform.
 
-From a course (or the Assignments tab):
-- Choose targets: individual employees, departments, user groups, a platform role, or the whole company.
-- Set start date, due date, reminder frequency.
-- See who is assigned and their progress state.
-- Assigned courses show up on the employee's My Learning and feed the Dashboard "Overdue" KPI.
+## Phase D — Profile, Settings, Achievements
+
+- Add `phone` and `avatar_url` to `employees`; create a public `avatars` storage bucket with owner-scoped write policies.
+- **Profile** page: profile image (editable, upload) plus read-only Employee ID, name, email, phone, department, job title, manager, employment status, date joined.
+- **Settings**: change password; notification preferences table (`notification_preferences`) with the 8 toggles (new course, reminder, due date, overdue, completed, certificate ready, badge earned, announcements) all defaulting ON.
+- **My Achievements**: KPI cards (certificates, badges, courses completed), filters All / Certificates / Badges with optional completion-date and course filters, medium cards; certificate cards show preview, course, completion date and Download PDF. New `badges` + `employee_badges` tables.
+
+## Phase E — People module
+
+- KPI cards: Total Employees, Total Departments, Total Groups.
+- Table with search, filters, sorting, pagination; row actions View, Edit, Reset Password, Resend Invitation, Activate/Deactivate, Delete.
+- Dedicated Departments and Groups admin pages (groups already exist; departments get their own screen).
+- **Bulk Import**: CSV upload, downloadable sample template with columns Employee ID, First Name, Last Name, Email, Phone, Department, Job Title, Manager, Employment Status, Date Joined, User Role; parse + validate client-side, preview table, duplicate detection by email, per-row error report, then server-side batch insert with a success summary and optional invite send.
+
+## Phase F — Phase 2: Course authoring & assignment
+
+- **Course Library admin**: create, edit, archive, delete, categories (`course_categories`), search and filter. Admin/Owner only.
+- **Course Builder**: ordered lessons of type YouTube, uploaded MP4, PDF, PowerPoint, rich text, external link. Uploads go to a private `course-media` bucket with signed URLs. YouTube: paste URL → extract video ID → embed with the IFrame API inside the app (never redirect), track watch percentage into `lesson_progress`, gate the next lesson on the required completion percentage.
+- **Assessments**: quiz builder on existing `quizzes`/`quiz_questions`/`quiz_answers`, passing score, attempt limit, lesson completion rules, certificate on/off, badge award.
+- **Assignments**: target individuals, departments, groups, job titles, or everyone; due date, mandatory/optional, reminder notifications, progress and completion tracking.
+- **Certificates**: auto-issued on completion with employee name, course, completion date, sequential certificate number, org logo, authorized signature and a QR verification placeholder; downloadable as PDF from the certificate card.
+
+---
 
 ## Technical notes
 
-- New tables via one migration with grants + RLS scoped by `current_org_id()` and `is_hr_admin()`.
-- Admin actions go through `createServerFn` with `requireSupabaseAuth`; role is verified server-side, never from the client.
-- Invites: server function creates the invited auth user and mails a set-password link; account creation uses the privileged server client only after the caller is confirmed HR Admin.
-- File uploads (thumbnails, videos, PDFs, PPT) use a new storage bucket with org-scoped paths.
-- Reordering lessons writes `order_index` in a single batched update.
+- Backend logic stays in `createServerFn` modules under `src/lib/*.functions.ts` with `requireSupabaseAuth`; privileged operations (invites, resets, bulk import) load the admin client inside the handler after verifying the caller is Owner/Admin. No role decisions are made from client state.
+- Every migration that creates a table includes GRANTs, RLS enable and org-scoped policies.
+- Generated database types are refreshed after each migration; a typecheck runs at the end of each phase.
+- PDF generation and CSV parsing use edge-compatible JS libraries (no native binaries).
+
+## Suggested order
+
+Phases A → B → C ship first (they unblock everything and fix the two critical bugs), then D → E, then F. Each phase is independently usable.
