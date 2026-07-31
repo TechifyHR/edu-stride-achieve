@@ -122,7 +122,6 @@ export type Database = {
           id: string
           organization_id: string
           reminder_frequency: string | null
-          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -136,7 +135,6 @@ export type Database = {
           id?: string
           organization_id: string
           reminder_frequency?: string | null
-          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -150,7 +148,6 @@ export type Database = {
           id?: string
           organization_id?: string
           reminder_frequency?: string | null
-          start_date?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -335,66 +332,6 @@ export type Database = {
           },
         ]
       }
-      employee_invitations: {
-        Row: {
-          accepted_at: string | null
-          created_at: string
-          email: string
-          employee_id: string | null
-          expires_at: string
-          id: string
-          invited_by: string | null
-          organization_id: string
-          role: Database["public"]["Enums"]["app_role"]
-          status: string
-          token: string
-          updated_at: string
-        }
-        Insert: {
-          accepted_at?: string | null
-          created_at?: string
-          email: string
-          employee_id?: string | null
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          organization_id: string
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: string
-          token: string
-          updated_at?: string
-        }
-        Update: {
-          accepted_at?: string | null
-          created_at?: string
-          email?: string
-          employee_id?: string | null
-          expires_at?: string
-          id?: string
-          invited_by?: string | null
-          organization_id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          status?: string
-          token?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "employee_invitations_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "employee_invitations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       employees: {
         Row: {
           created_at: string
@@ -405,7 +342,6 @@ export type Database = {
           employee_code: string | null
           employment_status: Database["public"]["Enums"]["employment_status"]
           first_name: string
-          gender: Database["public"]["Enums"]["gender_type"] | null
           id: string
           job_title: string | null
           last_name: string
@@ -423,7 +359,6 @@ export type Database = {
           employee_code?: string | null
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name: string
-          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           job_title?: string | null
           last_name: string
@@ -441,7 +376,6 @@ export type Database = {
           employee_code?: string | null
           employment_status?: Database["public"]["Enums"]["employment_status"]
           first_name?: string
-          gender?: Database["public"]["Enums"]["gender_type"] | null
           id?: string
           job_title?: string | null
           last_name?: string
@@ -770,90 +704,6 @@ export type Database = {
           },
         ]
       }
-      user_group_members: {
-        Row: {
-          created_at: string
-          employee_id: string
-          group_id: string
-          id: string
-          organization_id: string
-        }
-        Insert: {
-          created_at?: string
-          employee_id: string
-          group_id: string
-          id?: string
-          organization_id: string
-        }
-        Update: {
-          created_at?: string
-          employee_id?: string
-          group_id?: string
-          id?: string
-          organization_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_group_members_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: false
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_group_members_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "user_groups"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_group_members_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_groups: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          description: string | null
-          id: string
-          name: string
-          organization_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          organization_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          organization_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_groups_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -904,11 +754,10 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "hr_admin" | "manager" | "employee"
-      assignee_type: "employee" | "department" | "role" | "company" | "group"
+      assignee_type: "employee" | "department" | "role" | "company"
       course_status: "draft" | "published" | "archived"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       employment_status: "active" | "on_leave" | "terminated"
-      gender_type: "male" | "female" | "other" | "undisclosed"
       lesson_type: "youtube" | "video" | "pdf" | "pptx" | "text" | "link"
       question_type: "mcq" | "tf" | "multi"
     }
@@ -1039,11 +888,10 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "hr_admin", "manager", "employee"],
-      assignee_type: ["employee", "department", "role", "company", "group"],
+      assignee_type: ["employee", "department", "role", "company"],
       course_status: ["draft", "published", "archived"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       employment_status: ["active", "on_leave", "terminated"],
-      gender_type: ["male", "female", "other", "undisclosed"],
       lesson_type: ["youtube", "video", "pdf", "pptx", "text", "link"],
       question_type: ["mcq", "tf", "multi"],
     },
