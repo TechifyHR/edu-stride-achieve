@@ -99,7 +99,7 @@ function EmployeesPage() {
   const statusFn = useServerFn(setEmploymentStatus);
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
-  const isHr = me?.role === "hr_admin" || me?.role === "super_admin";
+  const isHr = !!me?.isAdmin;
   const { data, isLoading } = useQuery({ queryKey: ["directory"], queryFn: () => dirFn() });
 
   const [open, setOpen] = useState(false);
@@ -147,7 +147,7 @@ function EmployeesPage() {
           gender: f.gender || null,
           job_title: f.job_title,
           department_id: f.department_id || null,
-          role: f.role,
+          roles: [f.role],
           group_ids: f.group_ids,
           sendInvite: !f.id,
           origin: window.location.origin,

@@ -23,7 +23,7 @@ function SettingsPage() {
         <CardHeader><CardTitle className="text-base">Organization</CardTitle></CardHeader>
         <CardContent className="space-y-3 text-sm">
           <Row label="Name" value={me?.organization?.name ?? "—"} />
-          <Row label="Your role" value={me?.role?.replace("_", " ") ?? "—"} />
+          <Row label="Your roles" value={(me?.roles ?? []).map((r) => ROLE_LABELS[r]).join(", ") || "—"} />
           <Row label="Signed in as" value={me?.employee?.email ?? "—"} />
         </CardContent>
       </Card>

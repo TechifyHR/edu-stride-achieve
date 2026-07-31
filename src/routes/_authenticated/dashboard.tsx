@@ -21,9 +21,11 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const getMeFn = useServerFn(getMe);
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMeFn() });
-  const isHr = me?.role === "hr_admin" || me?.role === "super_admin";
+  const { view } = useViewMode();
+  const isHr = view === "admin" && !!me?.isAdmin;
   return isHr ? <HrDashboard name={me?.employee?.first_name} /> : <EmployeeDashboard name={me?.employee?.first_name} />;
 }
+
 
 function StatCard({ label, value, icon: Icon, tone = "default" }: { label: string; value: number | string; icon: React.ComponentType<{ className?: string }>; tone?: "default" | "success" | "warning" }) {
   const toneCls =

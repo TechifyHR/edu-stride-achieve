@@ -81,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-type Me = Awaited<ReturnType<typeof getMe>>;
+type Me = Awaited<ReturnType<typeof getMe>> | undefined;
 
 function Shell({ me, children }: { me: Me; children: ReactNode }) {
   const navigate = useNavigate();
