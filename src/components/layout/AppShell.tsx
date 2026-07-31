@@ -1,7 +1,7 @@
 import { Link, useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   LayoutDashboard,
   GraduationCap,
@@ -11,51 +11,58 @@ import {
   BarChart3,
   Settings,
   Bell,
-  Search,
   LogOut,
   FolderKanban,
-  UserCog,
+  Building2,
+  UsersRound,
   Calendar,
   Clock,
   Wallet,
   Target,
   UserPlus,
+  ChevronDown,
+  ClipboardList,
+  User,
+  Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMe } from "@/lib/me.functions";
+import { ViewModeProvider, useViewMode } from "@/lib/view-mode";
+import { VIEW_LABELS, ROLE_LABELS, type ViewMode } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; hrOnly?: boolean };
+type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
-const primary: NavItem[] = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-];
-const learning: NavItem[] = [
+const employeeLearning: NavItem[] = [
   { to: "/my-learning", label: "My Learning", icon: GraduationCap },
   { to: "/course-library", label: "Course Library", icon: BookOpen },
-  { to: "/certificates", label: "Certificates", icon: Award },
+  { to: "/achievements", label: "My Achievements", icon: Trophy },
 ];
-const admin: NavItem[] = [
-  { to: "/courses", label: "Courses", icon: FolderKanban, hrOnly: true },
-  { to: "/employees", label: "People", icon: Users, hrOnly: true },
-  { to: "/user-groups", label: "User Groups", icon: UserCog, hrOnly: true },
-  { to: "/reports", label: "Reports", icon: BarChart3, hrOnly: true },
+
+const adminNav: NavItem[] = [
+  { to: "/employees", label: "People", icon: Users },
+  { to: "/departments", label: "Departments", icon: Building2 },
+  { to: "/user-groups", label: "Groups", icon: UsersRound },
+  { to: "/courses", label: "Courses", icon: FolderKanban },
+  { to: "/assignments", label: "Assignments", icon: ClipboardList },
+  { to: "/reports", label: "Reports", icon: BarChart3 },
+  { to: "/certificates", label: "Certificates", icon: Award },
 ];
 
 const comingSoon = [
-  { label: "People", icon: UserCog },
   { label: "Leave", icon: Calendar },
   { label: "Attendance", icon: Clock },
   { label: "Payroll", icon: Wallet },
@@ -66,8 +73,20 @@ const comingSoon = [
 export function AppShell({ children }: { children: ReactNode }) {
   const getMeFn = useServerFn(getMe);
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => getMeFn() });
+
+  return (
+    <ViewModeProvider roles={me?.roles}>
+      <Shell me={me}>{children}</Shell>
+    </ViewModeProvider>
+  );
+}
+
+type Me = Awaited<ReturnType<typeof getMe>>;
+
+function Shell({ me, children }: { me: Me; children: ReactNode }) {
   const navigate = useNavigate();
-  const isHr = me?.role === "hr_admin" || me?.role === "super_admin";
+  const { view } = useViewMode();
+  const [learningOpen, setLearningOpen] = useState(true);
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -80,21 +99,50 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-muted/30 flex">
-      {/* Sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
         <div className="h-16 flex items-center gap-2 px-6 border-b border-sidebar-border">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
             <GraduationCap className="h-4 w-4" />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold text-sidebar-foreground">TechifyHR</span>
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Learning</span>
+            <span className="text-sm font-semibold text-sidebar-foreground">PeoHub</span>
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              by TechifyHR
+            </span>
           </div>
         </div>
+
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          <NavSection items={primary} />
-          <NavSection title="Learning" items={learning} />
-          {isHr && <NavSection title="Administration" items={admin} />}
+          <NavSection items={[{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]} />
+
+          {view === "admin" ? (
+            <NavSection title="Administration" items={adminNav} />
+          ) : (
+            <div>
+              <button
+                onClick={() => setLearningOpen((o) => !o)}
+                className="w-full flex items-center justify-between rounded-md px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted transition"
+                aria-expanded={learningOpen}
+              >
+                Learning
+                <ChevronDown
+                  className={cn("h-3.5 w-3.5 transition-transform", !learningOpen && "-rotate-90")}
+                />
+              </button>
+              {learningOpen && (
+                <div className="space-y-1 pt-1">
+                  {employeeLearning.map((item) => (
+                    <NavLink key={item.to} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {view === "manager" && (
+            <NavSection title="Team" items={[{ to: "/reports", label: "Team Reports", icon: BarChart3 }]} />
+          )}
+
           <div>
             <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Coming Soon
@@ -114,17 +162,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               ))}
             </div>
           </div>
+
           <NavSection items={[{ to: "/settings", label: "Settings", icon: Settings }]} />
         </nav>
       </aside>
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 flex items-center gap-3 border-b border-border bg-background px-4 md:px-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search courses, employees, certificates…" className="pl-9 bg-muted/50 border-transparent focus-visible:bg-background" />
-          </div>
+        <header className="h-16 flex items-center justify-end gap-2 border-b border-border bg-background px-4 md:px-6">
+          <ViewSwitcher />
           <Button variant="ghost" size="icon" aria-label="Notifications">
             <Bell className="h-5 w-5" />
           </Button>
@@ -132,6 +177,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             <DropdownMenuTrigger asChild>
               <button className="flex items-center gap-2 rounded-full hover:bg-muted p-1 pr-3 transition">
                 <Avatar className="h-8 w-8">
+                  {me?.employee?.avatar_url && <AvatarImage src={me.employee.avatar_url} alt="" />}
                   <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
                     {initials}
                   </AvatarFallback>
@@ -145,15 +191,24 @@ export function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuLabel>
                 <div className="flex flex-col">
                   <span className="text-sm font-medium">{me?.organization?.name}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{me?.role?.replace("_", " ")}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {(me?.roles ?? []).map((r) => ROLE_LABELS[r]).join(" · ")}
+                  </span>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate({ to: "/profile" })}>
+                <User className="h-4 w-4 mr-2" /> Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate({ to: "/achievements" })}>
+                <Trophy className="h-4 w-4 mr-2" /> My Achievements
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>
                 <Settings className="h-4 w-4 mr-2" /> Settings
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" /> Sign out
+                <LogOut className="h-4 w-4 mr-2" /> Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -164,8 +219,51 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 }
 
-function NavSection({ title, items }: { title?: string; items: NavItem[] }) {
+function ViewSwitcher() {
+  const { view, setView, views } = useViewMode();
+  if (views.length < 2) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          {VIEW_LABELS[view]}
+          <ChevronDown className="h-3.5 w-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel className="text-xs text-muted-foreground">Switch view</DropdownMenuLabel>
+        <DropdownMenuRadioGroup value={view} onValueChange={(v) => setView(v as ViewMode)}>
+          {views.map((v) => (
+            <DropdownMenuRadioItem key={v} value={v}>
+              {VIEW_LABELS[v]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function NavLink({ item }: { item: NavItem }) {
   const matchRoute = useMatchRoute();
+  const active = !!matchRoute({ to: item.to, fuzzy: false });
+  return (
+    <Link
+      to={item.to}
+      className={cn(
+        "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
+        active
+          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+          : "text-sidebar-foreground hover:bg-muted",
+      )}
+    >
+      <item.icon className="h-4 w-4" />
+      {item.label}
+    </Link>
+  );
+}
+
+function NavSection({ title, items }: { title?: string; items: NavItem[] }) {
   return (
     <div>
       {title && (
@@ -174,24 +272,9 @@ function NavSection({ title, items }: { title?: string; items: NavItem[] }) {
         </p>
       )}
       <div className="space-y-1">
-        {items.map((item) => {
-          const active = !!matchRoute({ to: item.to, fuzzy: false });
-          return (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition",
-                active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-muted",
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
-          );
-        })}
+        {items.map((item) => (
+          <NavLink key={item.to} item={item} />
+        ))}
       </div>
     </div>
   );
