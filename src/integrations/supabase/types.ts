@@ -1093,7 +1093,7 @@ export type Database = {
     }
     Enums: {
       app_role: "super_admin" | "hr_admin" | "manager" | "employee"
-      assignee_type: "employee" | "department" | "role" | "company"
+      assignee_type: "employee" | "department" | "role" | "company" | "group"
       course_status: "draft" | "published" | "archived"
       difficulty_level: "beginner" | "intermediate" | "advanced"
       employment_status: "active" | "on_leave" | "terminated"
@@ -1228,7 +1228,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["super_admin", "hr_admin", "manager", "employee"],
-      assignee_type: ["employee", "department", "role", "company"],
+      assignee_type: ["employee", "department", "role", "company", "group"],
       course_status: ["draft", "published", "archived"],
       difficulty_level: ["beginner", "intermediate", "advanced"],
       employment_status: ["active", "on_leave", "terminated"],
