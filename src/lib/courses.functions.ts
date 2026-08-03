@@ -25,7 +25,7 @@ export const listCourses = createServerFn({ method: "GET" })
         .order("order_index"),
       supabase
         .from("course_assignments")
-        .select("id, course_id, assignee_type, assignee_id, start_date, due_date, reminder_frequency, assigned_at"),
+        .select("id, course_id, assignee_type, assignee_id, start_date, due_date, mandatory, reminder_frequency, assigned_at"),
     ]);
     if (courses.error) throw courses.error;
     return {
