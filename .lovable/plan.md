@@ -1,76 +1,51 @@
+# PeoHub — Owner fix, Course Builder, Bulk Import, Certificates
 
-# PeoHub by TechifyHR — Roles, Auth, Navigation & Phase 2
+## 1. Workspace creation makes a full Workspace Owner
 
-Built on the existing app. No redesign: same green/white SaaS system, same routes and components, extended.
+Verified current state: the signup trigger already creates the organization, the employee record, and grants `super_admin` + `employee`, but it does **not** grant the Admin role — two of the four existing workspaces have no admin row. That is why the owner lands in the Employee-only experience.
 
-## Current state (verified)
+- Update the signup trigger so the first user of a workspace receives Workspace Owner + Admin + Employee together.
+- Backfill the Admin role for existing workspace owners who are missing it.
+- Guard role editing so a Workspace Owner can never drop their own owner role, and regular Admins cannot remove or demote the owner.
 
-- Roles are single-valued per user: `user_roles` holds one row read via `getMe()` as one `role`, and the whole UI gates on `role === 'hr_admin' | 'super_admin'`. There is no owner concept and no multi-role support.
-- Invites use `supabaseAdmin.auth.admin.inviteUserByEmail` with `redirectTo = ${origin}/invite`; `/invite` only reads an existing session and calls `updateUser({ password })`. The email itself is the default backend template, which is why recipients land on a non-branded page.
-- `employees` has `employee_code, first_name, last_name, email, job_title, department_id, manager_id, employment_status, date_joined` — no `phone`, no `avatar_url`.
-- No tables for badges, notification preferences, course categories, or certificate numbering beyond the existing `certificates` table.
-- Header currently has a centered/left search bar; sidebar Learning is a flat section; Certificates is a top-level item.
+## 2. Land in Admin View after creating a workspace
 
----
+- Sign-up sets a one-time flag so the new owner arrives on the Admin Dashboard instead of the Employee dashboard.
+- Normal sign-in keeps the current rule: always start in Employee View.
+- The header View Switcher continues to move freely between Employee / Admin / Manager.
 
-## Phase A — Roles & permissions (foundation)
+## 3. Course Builder (replaces the placeholder Courses page)
 
-**Data**
-- Add `workspace_owner` to the `app_role` enum; keep `user_roles` as the multi-row source of truth (unique on user+role) so one user holds several roles at once.
-- Workspace creation grants the creator **both** `workspace_owner` and `employee` rows, plus an `employees` record, in one transaction. Backfill existing org creators as owner + employee.
-- Security-definer helpers: `has_role()`, `is_admin()` (owner or admin), `is_owner()`. RLS policies switch from "hr_admin" checks to `is_admin()`; owner rows are protected — admins cannot delete or demote the owner, only the owner can grant/revoke Admin and transfer nothing.
-- `GRANT` statements included for every new/changed table.
+- Course list with search, status filter (draft / published / archived), and row actions: edit, publish, archive, duplicate-free delete (soft delete).
+- Course editor with basics (title, description, category, difficulty, duration, mandatory, passing score, certificate toggle) plus a lesson list with drag-free up/down reordering.
+- Lesson types: YouTube (paste URL, video ID extracted automatically, embedded player that never navigates to YouTube, watch-progress tracking with a required completion percentage before the next lesson unlocks), uploaded MP4, PDF, PowerPoint, rich text, and external link.
+- Uploads go to the existing course media storage bucket.
+- Only Workspace Owner / Admin can reach these screens or the write actions behind them.
 
-**App**
-- `getMe()` returns `roles: string[]` plus derived `isOwner / isAdmin / isManager / isEmployee`.
-- Owner immediately has departments, groups, people, bulk import, courses, assignments, reports, settings, invites.
+## 4. Course assignment
 
-## Phase B — Native invitation & auth flow
+- Assignment dialog from a course, plus a full Assignments page listing existing assignments.
+- Targets: individual employees, departments, groups, or the entire organization.
+- Options: start date, due date, mandatory/optional, reminder frequency.
+- Assignments feed learner progress and completion counts already tracked in the database.
 
-- Branded invite email template (PeoHub by TechifyHR) configured on the backend, linking to the app's own `/invite` URL — never a third-party or Lovable page.
-- `/invite` handles the token in the URL hash/query, exchanges it for a session, shows Set Password, then signs in and lands on the **Employee Dashboard**.
-- Already-registered users hitting an invite link go to the app's `/auth` sign-in.
-- After any login, land on the Employee Dashboard — never Admin View automatically.
+## 5. Bulk CSV import on the People page
 
-## Phase C — Shell: view switcher, header, navigation, rebrand
+- Download Sample CSV Template with columns: Employee ID, First Name, Last Name, Email, Phone, Department, Job Title, Manager, Employment Status, Date Joined, User Role.
+- Upload → parsed preview table before anything is saved.
+- Validation of required fields and email format, duplicate-email detection against the CSV and the existing directory, invalid rows skipped and listed in an error report, and a success summary (imported / skipped / failed).
+- Imported people are created with their roles and invited by email.
 
-- **View switcher** (only when the user has >1 role): a dropdown at the far right of the header, before Notifications — Employee View / Admin View / Manager View. Stores the active view in a context + localStorage; switching swaps sidebar and dashboard without signing out.
-- **Header**: all controls right-aligned in order View Switcher → Notifications → Avatar. Search moves into the left of the content area (nothing centered).
-- **User dropdown**: Profile, My Achievements, Settings, Logout.
-- **Sidebar**: collapsible "Learning" group (My Learning, Course Library, My Achievements); Certificates is folded into Achievements; other HR modules stay as "Coming Soon". Admin View sidebar: Dashboard, People, Departments, Groups, Courses, Assignments, Reports, Certificates, Settings.
-- **Rebrand** to "PeoHub by TechifyHR" across logo, titles, meta descriptions and emails; Learning is presented as one module of the platform.
+## 6. Certificate PDF generation
 
-## Phase D — Profile, Settings, Achievements
-
-- Add `phone` and `avatar_url` to `employees`; create a public `avatars` storage bucket with owner-scoped write policies.
-- **Profile** page: profile image (editable, upload) plus read-only Employee ID, name, email, phone, department, job title, manager, employment status, date joined.
-- **Settings**: change password; notification preferences table (`notification_preferences`) with the 8 toggles (new course, reminder, due date, overdue, completed, certificate ready, badge earned, announcements) all defaulting ON.
-- **My Achievements**: KPI cards (certificates, badges, courses completed), filters All / Certificates / Badges with optional completion-date and course filters, medium cards; certificate cards show preview, course, completion date and Download PDF. New `badges` + `employee_badges` tables.
-
-## Phase E — People module
-
-- KPI cards: Total Employees, Total Departments, Total Groups.
-- Table with search, filters, sorting, pagination; row actions View, Edit, Reset Password, Resend Invitation, Activate/Deactivate, Delete.
-- Dedicated Departments and Groups admin pages (groups already exist; departments get their own screen).
-- **Bulk Import**: CSV upload, downloadable sample template with columns Employee ID, First Name, Last Name, Email, Phone, Department, Job Title, Manager, Employment Status, Date Joined, User Role; parse + validate client-side, preview table, duplicate detection by email, per-row error report, then server-side batch insert with a success summary and optional invite send.
-
-## Phase F — Phase 2: Course authoring & assignment
-
-- **Course Library admin**: create, edit, archive, delete, categories (`course_categories`), search and filter. Admin/Owner only.
-- **Course Builder**: ordered lessons of type YouTube, uploaded MP4, PDF, PowerPoint, rich text, external link. Uploads go to a private `course-media` bucket with signed URLs. YouTube: paste URL → extract video ID → embed with the IFrame API inside the app (never redirect), track watch percentage into `lesson_progress`, gate the next lesson on the required completion percentage.
-- **Assessments**: quiz builder on existing `quizzes`/`quiz_questions`/`quiz_answers`, passing score, attempt limit, lesson completion rules, certificate on/off, badge award.
-- **Assignments**: target individuals, departments, groups, job titles, or everyone; due date, mandatory/optional, reminder notifications, progress and completion tracking.
-- **Certificates**: auto-issued on completion with employee name, course, completion date, sequential certificate number, org logo, authorized signature and a QR verification placeholder; downloadable as PDF from the certificate card.
-
----
+- On course completion (all lessons done and quiz passed where required), a certificate row is generated with a unique certificate number, then rendered to PDF and stored in the private certificates bucket.
+- Certificate layout: organization logo and name, employee name, course name, completion date, certificate number, authorized signature line, and a QR placeholder for future verification.
+- Certificates appear under My Achievements and on the Certificates page with preview and download.
 
 ## Technical notes
 
-- Backend logic stays in `createServerFn` modules under `src/lib/*.functions.ts` with `requireSupabaseAuth`; privileged operations (invites, resets, bulk import) load the admin client inside the handler after verifying the caller is Owner/Admin. No role decisions are made from client state.
-- Every migration that creates a table includes GRANTs, RLS enable and org-scoped policies.
-- Generated database types are refreshed after each migration; a typecheck runs at the end of each phase.
-- PDF generation and CSV parsing use edge-compatible JS libraries (no native binaries).
-
-## Suggested order
-
-Phases A → B → C ship first (they unblock everything and fix the two critical bugs), then D → E, then F. Each phase is independently usable.
+- Database migration: update `handle_new_user()` to insert the `hr_admin` role alongside `super_admin`/`employee`; backfill missing `hr_admin` rows for existing owners; add any missing lesson/progress columns needed for watch-percentage tracking.
+- New/updated server functions in `src/lib/courses.functions.ts`, `admin.functions.ts` (bulk import), and a new `certificates.functions.ts`; all writes re-check permissions via `requireAdmin`/`requireOwner` in `authz.server.ts`, never trusting the client view mode.
+- New dependencies: `papaparse` for CSV, `jspdf` + `qrcode` for certificate PDF rendering (generated server-side and uploaded to storage).
+- Pages rebuilt from placeholders: `courses.tsx`, `assignments.tsx`, `certificates.tsx`; `employees.tsx` gains the import flow; `my-learning.tsx` gains the lesson player.
+- Storage: signed URLs for private course media and certificate downloads.
