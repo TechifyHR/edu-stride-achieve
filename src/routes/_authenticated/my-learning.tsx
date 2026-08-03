@@ -39,7 +39,7 @@ function MyLearningPage() {
   const [open, setOpen] = useState<LCourse | null>(null);
 
   const progressByLesson = useMemo(
-    () => new Map(((data as any)?.progress ?? []).map((p: any) => [p.lesson_id, p])),
+    () => new Map<string, any>(((data as any)?.progress ?? []).map((p: any) => [p.lesson_id as string, p])),
     [data],
   );
 
