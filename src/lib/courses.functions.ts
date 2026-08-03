@@ -169,6 +169,20 @@ export const reorderLessons = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const setCourseStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; status: CourseStatus }) => d)
+  .handler(async ({ data, context }) => {
+    const { requireAdmin } = await import("./authz.server");
+    await requireAdmin(context.supabase, context.userId, "publish courses");
+    const { error } = await context.supabase
+      .from("courses")
+      .update({ status: data.status })
+      .eq("id", data.id);
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const assignCourse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -178,29 +192,26 @@ export const assignCourse = createServerFn({ method: "POST" })
       assignee_ids: string[];
       start_date?: string | null;
       due_date?: string | null;
+      mandatory?: boolean;
       reminder_frequency?: string | null;
     }) => d,
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: caller } = await supabase
-      .from("user_roles")
-      .select("organization_id, role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!caller || (caller.role !== "hr_admin" && caller.role !== "super_admin"))
-      throw new Error("Only HR admins can assign courses");
+    const { requireAdmin } = await import("./authz.server");
+    const caller = await requireAdmin(supabase, userId, "assign courses");
 
     const targets = data.assignee_type === "company" ? [null] : data.assignee_ids;
     if (!targets.length) throw new Error("Pick at least one target");
 
     const rows = targets.map((assignee_id) => ({
-      organization_id: caller.organization_id,
+      organization_id: caller.orgId,
       course_id: data.course_id,
       assignee_type: data.assignee_type,
       assignee_id,
       start_date: data.start_date || null,
       due_date: data.due_date || null,
+      mandatory: data.mandatory ?? false,
       reminder_frequency: data.reminder_frequency || null,
       assigned_by: userId,
     }));
@@ -208,6 +219,7 @@ export const assignCourse = createServerFn({ method: "POST" })
     if (error) throw error;
     return { count: rows.length };
   });
+
 
 export const removeAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
