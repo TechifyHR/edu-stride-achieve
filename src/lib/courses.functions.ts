@@ -54,13 +54,14 @@ export const saveCourse = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: caller } = await supabase
-      .from("user_roles")
-      .select("organization_id, role")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!caller || (caller.role !== "hr_admin" && caller.role !== "super_admin"))
-      throw new Error("Only HR admins can manage courses");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(
+      supabase,
+      userId,
+      data.id ? "canEditCourse" : "canCreateCourse",
+      data.id ? "edit courses" : "create courses",
+    );
+
 
     const payload = {
       title: data.title.trim(),
