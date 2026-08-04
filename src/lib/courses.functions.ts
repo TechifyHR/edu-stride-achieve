@@ -94,6 +94,8 @@ export const deleteCourse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canDeleteCourse", "delete courses");
     const { error } = await context.supabase
       .from("courses")
       .update({ deleted_at: new Date().toISOString() })
@@ -120,6 +122,8 @@ export const saveLesson = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(supabase, context.userId, "canEditCourse", "edit course content");
     const payload = {
       course_id: data.course_id,
       title: data.title.trim(),
@@ -149,6 +153,8 @@ export const deleteLesson = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canEditCourse", "edit course content");
     const { error } = await context.supabase
       .from("course_lessons")
       .update({ deleted_at: new Date().toISOString() })
@@ -162,6 +168,8 @@ export const reorderLessons = createServerFn({ method: "POST" })
   .inputValidator((d: { ids: string[] }) => d)
   .handler(async ({ data, context }) => {
     const { supabase } = context;
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(supabase, context.userId, "canEditCourse", "edit course content");
     await Promise.all(
       data.ids.map((id, index) =>
         supabase.from("course_lessons").update({ order_index: index }).eq("id", id),
@@ -174,8 +182,13 @@ export const setCourseStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; status: CourseStatus }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    await requireAdmin(context.supabase, context.userId, "publish courses");
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(
+      context.supabase,
+      context.userId,
+      data.status === "published" ? "canPublishCourse" : "canEditCourse",
+      data.status === "published" ? "publish courses" : "change course status",
+    );
     const { error } = await context.supabase
       .from("courses")
       .update({ status: data.status })
@@ -199,8 +212,31 @@ export const assignCourse = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(supabase, userId, "assign courses");
+    const { requirePermission, managerScopeEmployeeIds } = await import("./authz.server");
+    const caller = await requirePermission(supabase, userId, "canAssignCourse", "assign courses");
+
+    // Managers may only assign published courses, and only to their own team
+    // or department. Admins and the workspace owner are unrestricted.
+    if (!caller.isAdmin) {
+      const { data: course } = await supabase
+        .from("courses")
+        .select("status")
+        .eq("id", data.course_id)
+        .maybeSingle();
+      if (course?.status !== "published") {
+        throw new Error("Managers can only assign published courses");
+      }
+      const scope = await managerScopeEmployeeIds(supabase, userId);
+      if (data.assignee_type === "employee") {
+        const outside = data.assignee_ids.filter((id) => !scope.employeeIds.includes(id));
+        if (outside.length) throw new Error("You can only assign courses to your own team");
+      } else if (data.assignee_type === "department") {
+        const outside = data.assignee_ids.filter((id) => !scope.departmentIds.includes(id));
+        if (outside.length) throw new Error("You can only assign courses to your own department");
+      } else {
+        throw new Error("Managers can assign to their team members or their department only");
+      }
+    }
 
     const targets = data.assignee_type === "company" ? [null] : data.assignee_ids;
     if (!targets.length) throw new Error("Pick at least one target");
@@ -221,12 +257,14 @@ export const assignCourse = createServerFn({ method: "POST" })
     return { count: rows.length };
   });
 
-
 export const removeAssignment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canAssignCourse", "manage assignments");
     const { error } = await context.supabase.from("course_assignments").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
+
