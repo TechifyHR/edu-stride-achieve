@@ -91,6 +91,7 @@ function CoursesPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listCourses);
   const { data } = useQuery({ queryKey: ["courses"], queryFn: () => listFn() });
+  const perms = usePermissions();
   const [selected, setSelected] = useState<string | null>(null);
 
   const courses = data?.courses ?? [];
@@ -105,20 +106,26 @@ function CoursesPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Courses</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Author courses, add lessons and publish them to your people.
+            {perms.canCreateCourse
+              ? "Author courses, add lessons and publish them to your people."
+              : "Browse courses available in your workspace."}
           </p>
         </div>
-        <CourseDialog onSaved={invalidate}>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" /> New course
-          </Button>
-        </CourseDialog>
+        {perms.canCreateCourse && (
+          <CourseDialog onSaved={invalidate}>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" /> New course
+            </Button>
+          </CourseDialog>
+        )}
       </div>
 
       {courses.length === 0 ? (
         <Card className="shadow-card">
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No courses yet. Create your first course to get started.
+            {perms.canCreateCourse
+              ? "No courses yet. Create your first course to get started."
+              : "No courses have been published yet."}
           </CardContent>
         </Card>
       ) : (
@@ -127,6 +134,7 @@ function CoursesPage() {
             <CourseCard
               key={c.id}
               course={c}
+              perms={perms}
               lessonCount={lessons.filter((l) => l.course_id === c.id).length}
               onOpen={() => setSelected(c.id)}
               onChanged={invalidate}
@@ -134,6 +142,7 @@ function CoursesPage() {
           ))}
         </div>
       )}
+
 
       <Dialog open={!!active} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
