@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { NO_PERMISSIONS, type PermissionKey, type Permissions } from "@/lib/permissions";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
@@ -87,6 +88,7 @@ type Me = Awaited<ReturnType<typeof getMe>> | undefined;
 function Shell({ me, children }: { me: Me; children: ReactNode }) {
   const navigate = useNavigate();
   const { view } = useViewMode();
+  const perms = (me?.permissions as Permissions | undefined) ?? NO_PERMISSIONS;
   const [learningOpen, setLearningOpen] = useState(true);
 
   const signOut = async () => {
@@ -117,7 +119,10 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
           <NavSection items={[{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]} />
 
           {view === "admin" ? (
-            <NavSection title="Administration" items={adminNav} />
+            <NavSection
+              title="Administration"
+              items={ADMIN_NAV.filter((item) => perms[item.permission])}
+            />
           ) : (
             <div>
               <button
@@ -141,7 +146,17 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
           )}
 
           {view === "manager" && (
-            <NavSection title="Team" items={[{ to: "/reports", label: "Team Reports", icon: BarChart3 }]} />
+            <NavSection
+              title="Team"
+              items={[
+                ...(perms.canAssignCourse
+                  ? [{ to: "/assignments", label: "Assignments", icon: ClipboardList }]
+                  : []),
+                ...(perms.canViewReports
+                  ? [{ to: "/reports", label: "Team Reports", icon: BarChart3 }]
+                  : []),
+              ]}
+            />
           )}
 
           <div>
