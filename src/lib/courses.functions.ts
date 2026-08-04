@@ -83,7 +83,7 @@ export const saveCourse = createServerFn({ method: "POST" })
     }
     const { data: created, error } = await supabase
       .from("courses")
-      .insert({ ...payload, organization_id: caller.organization_id, created_by: userId })
+      .insert({ ...payload, organization_id: caller.orgId, created_by: userId })
       .select("id")
       .single();
     if (error) throw error;
