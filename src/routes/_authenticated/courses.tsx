@@ -164,15 +164,18 @@ function CoursesPage() {
 
 function CourseCard({
   course,
+  perms,
   lessonCount,
   onOpen,
   onChanged,
 }: {
   course: Course;
+  perms: Permissions;
   lessonCount: number;
   onOpen: () => void;
   onChanged: () => void;
 }) {
+
   const statusFn = useServerFn(setCourseStatus);
   const delFn = useServerFn(deleteCourse);
 
