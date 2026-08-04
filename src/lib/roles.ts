@@ -1,6 +1,10 @@
 // Client-safe role helpers shared across the app.
 // `super_admin` is the Workspace Owner — the highest permission level in an organization.
-export type AppRole = "super_admin" | "hr_admin" | "manager" | "employee";
+// Permission logic itself lives in ./permissions.
+export type { AppRole, PermissionKey, Permissions } from "./permissions";
+export { can, permissionsFor, NO_PERMISSIONS, PERMISSION_LABELS } from "./permissions";
+import type { AppRole } from "./permissions";
+
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Workspace Owner",
