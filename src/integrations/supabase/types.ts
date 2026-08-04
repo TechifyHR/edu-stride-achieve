@@ -1089,6 +1089,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_hr_admin: { Args: never; Returns: boolean }
+      is_manager: { Args: never; Returns: boolean }
       is_owner: { Args: never; Returns: boolean }
     }
     Enums: {

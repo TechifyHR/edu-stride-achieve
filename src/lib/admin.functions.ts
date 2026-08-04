@@ -64,8 +64,8 @@ export const createDepartment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id?: string; name: string }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(context.supabase, context.userId, "manage departments");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(context.supabase, context.userId, "canManageDepartments", "manage departments");
     if (data.id) {
       const { data: updated, error } = await context.supabase
         .from("departments")
@@ -89,8 +89,8 @@ export const deleteDepartment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    await requireAdmin(context.supabase, context.userId, "manage departments");
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canManageDepartments", "manage departments");
     const { error } = await context.supabase
       .from("departments")
       .update({ deleted_at: new Date().toISOString() })
@@ -147,8 +147,8 @@ export const upsertPerson = createServerFn({ method: "POST" })
   .inputValidator((d: PersonInput) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(supabase, userId, "manage people");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(supabase, userId, "canManagePeople", "manage people");
     const orgId = caller.orgId;
     const email = data.email.trim().toLowerCase();
 
@@ -253,8 +253,8 @@ export const resendInvite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { employeeId: string; origin: string }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(context.supabase, context.userId, "resend invitations");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(context.supabase, context.userId, "canManagePeople", "resend invitations");
 
     const { data: employee } = await context.supabase
       .from("employees")
@@ -297,8 +297,8 @@ export const resetEmployeePassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { employeeId: string; origin: string }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    await requireAdmin(context.supabase, context.userId, "reset passwords");
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canManagePeople", "reset passwords");
     const { data: employee } = await context.supabase
       .from("employees")
       .select("email")
@@ -317,8 +317,8 @@ export const setEmploymentStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string; status: EmploymentStatus }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    await requireAdmin(context.supabase, context.userId, "change employment status");
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canManagePeople", "change employment status");
     const { error } = await context.supabase
       .from("employees")
       .update({ employment_status: data.status })
@@ -331,8 +331,8 @@ export const deleteEmployee = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(context.supabase, context.userId, "remove people");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(context.supabase, context.userId, "canManagePeople", "remove people");
 
     const { data: employee } = await context.supabase
       .from("employees")
@@ -380,8 +380,8 @@ export const bulkImportEmployees = createServerFn({ method: "POST" })
   .inputValidator((d: { rows: BulkRow[]; sendInvites: boolean; origin: string }) => d)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(supabase, userId, "import people");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(supabase, userId, "canBulkImport", "import people");
     const orgId = caller.orgId;
 
     const [{ data: depts }, { data: existing }] = await Promise.all([
@@ -504,8 +504,8 @@ export const saveUserGroup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id?: string; name: string; description?: string | null }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(context.supabase, context.userId, "manage groups");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(context.supabase, context.userId, "canManageGroups", "manage groups");
 
     if (data.id) {
       const { error } = await context.supabase
@@ -533,8 +533,8 @@ export const deleteUserGroup = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    await requireAdmin(context.supabase, context.userId, "manage groups");
+    const { requirePermission } = await import("./authz.server");
+    await requirePermission(context.supabase, context.userId, "canManageGroups", "manage groups");
     const { error } = await context.supabase.from("user_groups").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
@@ -544,8 +544,8 @@ export const setGroupMembers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { groupId: string; employeeIds: string[] }) => d)
   .handler(async ({ data, context }) => {
-    const { requireAdmin } = await import("./authz.server");
-    const caller = await requireAdmin(context.supabase, context.userId, "manage groups");
+    const { requirePermission } = await import("./authz.server");
+    const caller = await requirePermission(context.supabase, context.userId, "canManageGroups", "manage groups");
 
     await context.supabase.from("user_group_members").delete().eq("group_id", data.groupId);
     if (data.employeeIds.length) {

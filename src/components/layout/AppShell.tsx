@@ -43,6 +43,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { NO_PERMISSIONS, type PermissionKey, type Permissions } from "@/lib/permissions";
 
 type NavItem = { to: string; label: string; icon: React.ComponentType<{ className?: string }> };
 
@@ -52,15 +53,16 @@ const employeeLearning: NavItem[] = [
   { to: "/achievements", label: "My Achievements", icon: Trophy },
 ];
 
-const adminNav: NavItem[] = [
-  { to: "/employees", label: "People", icon: Users },
-  { to: "/departments", label: "Departments", icon: Building2 },
-  { to: "/user-groups", label: "Groups", icon: UsersRound },
-  { to: "/courses", label: "Courses", icon: FolderKanban },
-  { to: "/assignments", label: "Assignments", icon: ClipboardList },
-  { to: "/reports", label: "Reports", icon: BarChart3 },
-  { to: "/certificates", label: "Certificates", icon: Award },
+const ADMIN_NAV: (NavItem & { permission: PermissionKey })[] = [
+  { to: "/employees", label: "People", icon: Users, permission: "canManagePeople" },
+  { to: "/departments", label: "Departments", icon: Building2, permission: "canManageDepartments" },
+  { to: "/user-groups", label: "Groups", icon: UsersRound, permission: "canManageGroups" },
+  { to: "/courses", label: "Courses", icon: FolderKanban, permission: "canEditCourse" },
+  { to: "/assignments", label: "Assignments", icon: ClipboardList, permission: "canAssignCourse" },
+  { to: "/reports", label: "Reports", icon: BarChart3, permission: "canViewReports" },
+  { to: "/certificates", label: "Certificates", icon: Award, permission: "canManagePeople" },
 ];
+
 
 const comingSoon = [
   { label: "Leave", icon: Calendar },
@@ -86,6 +88,7 @@ type Me = Awaited<ReturnType<typeof getMe>> | undefined;
 function Shell({ me, children }: { me: Me; children: ReactNode }) {
   const navigate = useNavigate();
   const { view } = useViewMode();
+  const perms = (me?.permissions as Permissions | undefined) ?? NO_PERMISSIONS;
   const [learningOpen, setLearningOpen] = useState(true);
 
   const signOut = async () => {
@@ -116,7 +119,10 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
           <NavSection items={[{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }]} />
 
           {view === "admin" ? (
-            <NavSection title="Administration" items={adminNav} />
+            <NavSection
+              title="Administration"
+              items={ADMIN_NAV.filter((item) => perms[item.permission])}
+            />
           ) : (
             <div>
               <button
@@ -140,7 +146,17 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
           )}
 
           {view === "manager" && (
-            <NavSection title="Team" items={[{ to: "/reports", label: "Team Reports", icon: BarChart3 }]} />
+            <NavSection
+              title="Team"
+              items={[
+                ...(perms.canAssignCourse
+                  ? [{ to: "/assignments", label: "Assignments", icon: ClipboardList }]
+                  : []),
+                ...(perms.canViewReports
+                  ? [{ to: "/reports", label: "Team Reports", icon: BarChart3 }]
+                  : []),
+              ]}
+            />
           )}
 
           <div>
