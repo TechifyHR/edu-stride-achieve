@@ -218,28 +218,35 @@ function CourseCard({
           <Button size="sm" variant="outline" onClick={onOpen}>
             Lessons
           </Button>
-          <CourseDialog course={course} onSaved={onChanged}>
-            <Button size="sm" variant="outline">
-              <Pencil className="h-3.5 w-3.5" />
+          {perms.canEditCourse && (
+            <CourseDialog course={course} onSaved={onChanged}>
+              <Button size="sm" variant="outline">
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            </CourseDialog>
+          )}
+          {perms.canPublishCourse && (
+            <Button
+              size="sm"
+              variant={course.status === "published" ? "secondary" : "default"}
+              onClick={() => publish.mutate(course.status === "published" ? "draft" : "published")}
+              disabled={publish.isPending}
+            >
+              {course.status === "published" ? "Unpublish" : "Publish"}
             </Button>
-          </CourseDialog>
-          <Button
-            size="sm"
-            variant={course.status === "published" ? "secondary" : "default"}
-            onClick={() => publish.mutate(course.status === "published" ? "draft" : "published")}
-            disabled={publish.isPending}
-          >
-            {course.status === "published" ? "Unpublish" : "Publish"}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => remove.mutate()}
-            disabled={remove.isPending}
-          >
-            <Trash2 className="h-3.5 w-3.5 text-destructive" />
-          </Button>
+          )}
+          {perms.canDeleteCourse && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => remove.mutate()}
+              disabled={remove.isPending}
+            >
+              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+            </Button>
+          )}
         </div>
+
       </CardContent>
     </Card>
   );
