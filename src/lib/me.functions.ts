@@ -30,10 +30,12 @@ export const getMe = createServerFn({ method: "GET" })
     return {
       userId,
       roles,
+      permissions: permissionsFor(roles),
       isOwner: roles.includes("super_admin"),
       isAdmin: roles.some((r) => r === "super_admin" || r === "hr_admin"),
       isManager: roles.includes("manager"),
       organization: org,
       employee: empRes.data,
     };
+
   });
