@@ -99,7 +99,7 @@ function EmployeesPage() {
   const statusFn = useServerFn(setEmploymentStatus);
 
   const { data: me } = useQuery({ queryKey: ["me"], queryFn: () => meFn() });
-  const isHr = !!me?.isAdmin;
+  const isHr = !!(me?.permissions as { canManagePeople?: boolean } | undefined)?.canManagePeople;
   const { data, isLoading } = useQuery({ queryKey: ["directory"], queryFn: () => dirFn() });
 
   const [open, setOpen] = useState(false);
